@@ -1,0 +1,6 @@
+fastapi
+pydantic
+twilio
+deta
+attrs
+python-decouple
