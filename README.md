@@ -7,6 +7,8 @@ Within the hardware_src folder is source for the specific Arduino and Notecard i
  
  ## How It Works:
 - Arduino parses data from temp sensor and adds it to queue on Blues.IO Cellular notecard. Let's call this sensor "Arduino1".
+<img src="https://user-images.githubusercontent.com/2868857/196744080-be41ca51-9107-4572-aaa8-d5bf957d4384.jpeg" width="200">
+
 - Blues.IO Cellular notecard sends data from queue at a defined intervalto the Blues.io Notehub. The notehub is GUI for storing events and routing to various sources. In this case, a new event is parsed in the notehub using JSONata expression which extracts a set of fields from the event json serialized by Arduino1:
 `{
     "datetime":when,
