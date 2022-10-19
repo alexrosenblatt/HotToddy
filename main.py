@@ -26,4 +26,3 @@ def webhook_handler(event: NotecardEvent) -> NotecardEvent:
     if len(notification_event.get_notifications()) >= 0:
         notification_event.send_notification()
     return event
-
