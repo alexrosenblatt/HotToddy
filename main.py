@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from twilio.rest import Client  # type: ignore
 
-from controller import *
+from models import *
 
 # a POST route for webhook events to ingest readings
 @app.post("/")

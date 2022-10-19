@@ -1,7 +1,7 @@
 import pytest
 
 from constants import NotificationType, SensorType, TemperatureThresholds
-from controller import *
+from models import *
 from main import *
 
 
