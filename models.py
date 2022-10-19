@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 from typing import List, Tuple
 
+from decouple import config  # type: ignore
 from deta import Deta  # type: ignore
 from fastapi import FastAPI
 from pydantic import BaseModel
 from twilio.rest import Client  # type: ignore
-
-from decouple import config  # type: ignore
 
 TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
@@ -14,11 +13,11 @@ DETA_KEY = config("DETA_KEY")
 
 
 from constants import (
-    TemperatureThresholds,
-    HumidityThresholds,
     AirQualityThresholds,
+    HumidityThresholds,
     NotificationType,
     SensorType,
+    TemperatureThresholds,
 )
 
 TWILIO_CLIENT_IDS = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
@@ -64,7 +63,8 @@ class Reading:
 
 
 class NotecardReading(BaseModel):
-    """An individual capture from a single sensor contained within a single webhook event. Thrown away after parsing into an individual Reading object."""
+    """An individual capture from a single sensor contained within a single webhook event.
+    Thrown away after parsing into an individual Reading object."""
 
     sensor_name: str
     sensor_reading: float
@@ -72,7 +72,8 @@ class NotecardReading(BaseModel):
 
 
 class NotecardEvent(BaseModel):
-    """Defines webhook event for FastAPI. readings is a list of captures from all sensors."""
+    """Defines webhook event for ingestion by FastAPI. 'readings' is a list of captures from all sensors. Currently called "Notecard event"
+    as the primary caller is from the Notecard IOT service. In the future, could be generecized."""
 
     datetime: int
     event: str

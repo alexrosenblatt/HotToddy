@@ -1,6 +1,10 @@
 from enum import Enum, IntEnum
 
 
+class CacheConfig(IntEnum):
+    EXPIRATION_TIME = 360
+
+
 class TemperatureThresholds(IntEnum):
     AVERAGE = 80
     SINGLE = 80
