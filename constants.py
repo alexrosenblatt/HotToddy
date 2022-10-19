@@ -13,17 +13,17 @@ class TemperatureThresholds(IntEnum):
 
 
 class HumidityThresholds(IntEnum):
-    AVERAGE = 80
-    SINGLE = 80
-    SINGLE_INCREASE_DELTA = 10
-    AVERAGE_INCREASE_DELTA = 10
+    AVERAGE = 40
+    SINGLE = 20
+    SINGLE_INCREASE_DELTA = 17
+    AVERAGE_INCREASE_DELTA = 9
 
 
 class AirQualityThresholds(IntEnum):
-    AVERAGE = 80
-    SINGLE = 80
-    SINGLE_INCREASE_DELTA = 10
-    AVERAGE_INCREASE_DELTA = 10
+    AVERAGE = 35
+    SINGLE = 90
+    SINGLE_INCREASE_DELTA = 15
+    AVERAGE_INCREASE_DELTA = 11
 
 
 class SensorType(Enum):
@@ -39,4 +39,4 @@ class NotificationType(Enum):
     RAPID_DECREASE = 4
     TOO_HIGH_AVERAGE = 5
     TOO_LOW_AVERAGE = 6
-    NONE = 7
+    NOOP = 7

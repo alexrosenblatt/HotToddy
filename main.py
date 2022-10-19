@@ -13,7 +13,7 @@ from models import *
 # a POST route for webhook events to ingest readings, utilizes FastApi
 @app.post("/")
 def webhook_handler(event: NotecardEvent) -> NotecardEvent:
-    notification_event = Notification(queued_notifications=[])
+    notification_event = Notifications(queued_notifications=[])
     parsed_readings = NotecardEvent.parse_event(event)
 
     # inserts individual reading into a persistent database (all_readings_db) and a cache to support recent average calculation (recent_readings_db)
@@ -29,5 +29,5 @@ def webhook_handler(event: NotecardEvent) -> NotecardEvent:
 
     # if any pending notifications are available, enqueues them to be sent
     if len(notification_event.get_notifications()) >= 0:
-        notification_event.send_notification()
+        notification_event.construct_twilio_sms()
     return event

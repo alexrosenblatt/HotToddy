@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass
 from typing import List, Tuple
 
@@ -6,6 +7,9 @@ from deta import Deta  # type: ignore
 from fastapi import FastAPI
 from pydantic import BaseModel
 from twilio.rest import Client  # type: ignore
+
+logging.basicConfig(filename="models.log", encoding="utf-8", level=logging.DEBUG)
+
 
 TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
@@ -128,25 +132,41 @@ class NotecardEvent(BaseModel):
             if reading["sensor_name"] == sensor_name
         ]
         last_readings.append(sensor_reading)
-        recent_sensor_average = sum(last_readings) / len(last_readings[:6])
+
+        # average is a function of the time set for the recent_readings cache. To get a smaller window, set a smaller time for CacheConfig.ExpirationTime
+        recent_sensor_average = sum(last_readings) / len(last_readings)
         last_averages.insert(0, (sensor_name, recent_sensor_average))
         return recent_sensor_average
 
 
 @dataclass
-class Notification:
+class Notifications:
+    """Handles evaluation for when to notify based on Reading state and mechanics for notification.
+    Currently just twilio sms, could be extended to another service."""
+
     queued_notifications: List[tuple[Reading, NotificationType]]
 
     def evaluate_for_notify(self, reading: Reading) -> bool:
-        res = self._evaluate_for_notify_logic(reading)
-        if res[1] != NotificationType.NONE:
-            self.queued_notifications.append(res)
+        """Wrapper for main notification evaluation logic - parses return from _evaluate_for_notify_logic and appends
+        the reading to be sent.
+
+        Args:
+            reading (Reading): Reading to be evaluated
+
+        Returns:
+            bool: True if a reading has triggered a notification
+        """
+        notification_result = self._evaluate_for_notify_logic(reading)
+        if notification_result[1] != NotificationType.NOOP:
+            self.queued_notifications.append(notification_result)
             return True
         else:
             return False
 
-    def send_notification(self):
-        print(self.queued_notifications)
+    def construct_twilio_sms(self):
+        """Parses queued notifications and constructs strings to include in SMS."""
+        logging.debug(self.queued_notifications)
+
         if len(self.queued_notifications) >= 1:
             body: str = ""
             for qn in self.queued_notifications:
@@ -156,7 +176,12 @@ class Notification:
                 body = body.__add__(message)
             self.send_twilio_message(body)
 
-    def send_twilio_message(self, body):
+    def send_twilio_message(self, body: str):
+        """Calls twilio API with constructed body string.
+
+        Args:
+            body (str): Parsed sensor readings from construct_twilio_sms()
+        """
         TWILIO_CLIENT_IDS.messages.create(
             body=body,
             from_="+15405924574",
@@ -164,13 +189,26 @@ class Notification:
         )
 
     def get_notifications(self) -> List:
+        """
+
+        Returns:
+            List: Notifications evaluated as meeting the threshold to send
+        """
         return self.queued_notifications
 
     def _evaluate_for_notify_logic(
-        self,
-        reading: Reading,
+        self, reading: Reading
     ) -> Tuple[Reading, NotificationType]:
+        """Main logic to evaluate if a notification needs to be sent based on the ingested sensor data.
 
+        Args:
+            reading (Reading): Current Reading object
+
+        Returns:
+            Tuple[Reading, NotificationType]: Returns the Reading object and the constant associated with the notification reason. Returns a NOOP if no notification is to be sent."
+        """
+
+        # associates the Reading's sensortype with the appropriate thresholds set in the constant file
         if reading.sensor_type == SensorType.TEMPERATURE:
             threshold_type = TemperatureThresholds
         elif reading.sensor_type == SensorType.HUMIDITY:
@@ -180,26 +218,36 @@ class Notification:
         else:
             raise (ValueError)
 
+        # Evaluates if the current average is too high
         if reading.recent_average >= threshold_type.AVERAGE.value:
-            print(NotificationType.TOO_HIGH_AVERAGE)
+            logging.debug(NotificationType.TOO_HIGH_AVERAGE)
             return reading, NotificationType.TOO_HIGH_AVERAGE
+
+        # Evaluates if any current single reading is too high
         elif reading.sensor_reading >= threshold_type.SINGLE.value:
-            print(NotificationType.TOO_HIGH_SINGLE)
+            logging.debug(NotificationType.TOO_HIGH_SINGLE)
             return reading, NotificationType.TOO_HIGH_SINGLE
+
+        # Evaluates if the last reading has increased too fast compared to the average
         elif (
             reading.sensor_reading - reading.recent_average
             >= threshold_type.SINGLE_INCREASE_DELTA.value
         ):
-            print(NotificationType.RAPID_INCREASE)
+
+            logging.debug(NotificationType.RAPID_INCREASE)
             return reading, NotificationType.RAPID_INCREASE
+
+        # Evaluates if the last average has increased too fast compared to the previous average
         elif (
             last_average[1] - reading.recent_average
             >= threshold_type.AVERAGE_INCREASE_DELTA.value
             for last_average in last_averages
             if last_average[0] == reading.sensor_name
         ):
-            print(NotificationType.RAPID_INCREASE)
+
+            logging.debug(NotificationType.RAPID_INCREASE)
             return reading, NotificationType.RAPID_INCREASE
+
         else:
-            print("no notification triggered")
-            return reading, NotificationType.NONE
+            logging.debug("no notification triggered")
+            return reading, NotificationType.NOOP

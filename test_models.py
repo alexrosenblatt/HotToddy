@@ -1,4 +1,4 @@
-import pytest
+import pytest  # type: ignore
 
 from constants import NotificationType, SensorType, TemperatureThresholds
 from models import *
@@ -48,7 +48,7 @@ def example_temperature_reading(temp, average) -> Reading:
     ],
 )
 def test_temperature_too_high(example_temperature_reading):
-    notification_event = Notification(queued_notifications=[])
+    notification_event = Notifications(queued_notifications=[])
     res = notification_event._evaluate_for_notify_logic(example_temperature_reading)
     print(f"res = {res}")
     assert res[1] == NotificationType.TOO_HIGH_SINGLE
@@ -65,7 +65,7 @@ def test_temperature_too_high(example_temperature_reading):
     ],
 )
 def test_average_temperature_too_high(example_temperature_reading):
-    notification_event = Notification(queued_notifications=[])
+    notification_event = Notifications(queued_notifications=[])
     res = notification_event._evaluate_for_notify_logic(example_temperature_reading)
     print(f"res = {res}")
     assert res[1] == NotificationType.TOO_HIGH_AVERAGE
@@ -86,7 +86,7 @@ def test_average_temperature_too_high(example_temperature_reading):
     ],
 )
 def test_increase_temperature_too_high(example_temperature_reading):
-    notification_event = Notification(queued_notifications=[])
+    notification_event = Notifications(queued_notifications=[])
     res = notification_event._evaluate_for_notify_logic(example_temperature_reading)
     print(f"res = {res}")
     assert res[1] == NotificationType.RAPID_INCREASE
@@ -98,6 +98,6 @@ def test_increase_temperature_too_high(example_temperature_reading):
 )
 def test_temperature_exception_handling(example_temperature_reading):
     with pytest.raises(TypeError):
-        notification_event = Notification(queued_notifications=[])
+        notification_event = Notifications(queued_notifications=[])
         res = notification_event._evaluate_for_notify_logic(example_temperature_reading)
         print(f"res = {res}")
