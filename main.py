@@ -27,22 +27,3 @@ def webhook_handler(event: NotecardEvent) -> NotecardEvent:
         notification_event.send_notification()
     return event
 
-
-readings1 = NotecardReading(
-    sensor_name="arduino_1", sensor_reading=10, sensor_type=SensorType(1)
-)
-readings2 = NotecardReading(
-    sensor_name="notecard", sensor_reading=10, sensor_type=SensorType(1)
-)
-readings3 = NotecardReading(
-    sensor_name="notecard2", sensor_reading=10, sensor_type=SensorType(1)
-)
-
-testevent = NotecardEvent(
-    datetime=1665021239,
-    event="f3ec6e7b-382b-472b-ad13-c52d7327cf76",
-    best_lat=45.5728875,
-    best_long=-122.66610937499999,
-    readings=[readings1, readings2, readings3],
-)
-# webhook_handler(testevent)
