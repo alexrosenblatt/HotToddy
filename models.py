@@ -11,11 +11,6 @@ from twilio.rest import Client  # type: ignore
 logging.basicConfig(filename="models.log", encoding="utf-8", level=logging.DEBUG)
 
 
-TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
-DETA_KEY = config("DETA_KEY")
-
-
 from constants import (
     AirQualityThresholds,
     HumidityThresholds,
@@ -23,6 +18,11 @@ from constants import (
     SensorType,
     TemperatureThresholds,
 )
+
+TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
+DETA_KEY = config("DETA_KEY")
+
 
 TWILIO_CLIENT_IDS = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
@@ -60,7 +60,10 @@ class Reading:
             bool: Returns true if succesful, otherwise exception
         """
         try:
-            database.put(self.__dict__, expire_in=expiration_seconds)
+            db_response = database.put(self.__dict__, expire_in=expiration_seconds)
+            print(db_response)
+            logging.debug(f"inserted reading into {database.name}")
+            print(f"inserted reading into {database.name}")
             return True
         except:
             return False
@@ -159,6 +162,7 @@ class Notifications:
         notification_result = self._evaluate_for_notify_logic(reading)
         if notification_result[1] != NotificationType.NOOP:
             self.queued_notifications.append(notification_result)
+            logging.debug(f"Appended {notification_result} to notification queue.")
             return True
         else:
             return False
@@ -211,21 +215,24 @@ class Notifications:
         # associates the Reading's sensortype with the appropriate thresholds set in the constant file
         if reading.sensor_type == SensorType.TEMPERATURE:
             threshold_type = TemperatureThresholds
+            logging.debug(f"{reading} matched to{TemperatureThresholds}")
         elif reading.sensor_type == SensorType.HUMIDITY:
             threshold_type = HumidityThresholds  # type: ignore
+            logging.debug(f"{reading} matched to{HumidityThresholds}")
         elif reading.sensor_type == SensorType.AIRQUALITY:
+            logging.debug(f"{reading} matched to{AirQualityThresholds}")
             threshold_type = AirQualityThresholds  # type: ignore
         else:
             raise (ValueError)
 
         # Evaluates if the current average is too high
         if reading.recent_average >= threshold_type.AVERAGE.value:
-            logging.debug(NotificationType.TOO_HIGH_AVERAGE)
+            logging.debug(f"{reading.event} is {NotificationType.TOO_HIGH_AVERAGE}")
             return reading, NotificationType.TOO_HIGH_AVERAGE
 
         # Evaluates if any current single reading is too high
         elif reading.sensor_reading >= threshold_type.SINGLE.value:
-            logging.debug(NotificationType.TOO_HIGH_SINGLE)
+            logging.debug(f"{reading.event} is {NotificationType.TOO_HIGH_SINGLE}")
             return reading, NotificationType.TOO_HIGH_SINGLE
 
         # Evaluates if the last reading has increased too fast compared to the average
@@ -234,7 +241,7 @@ class Notifications:
             >= threshold_type.SINGLE_INCREASE_DELTA.value
         ):
 
-            logging.debug(NotificationType.RAPID_INCREASE)
+            logging.debug(f"{reading.event} is {NotificationType.RAPID_INCREASE}")
             return reading, NotificationType.RAPID_INCREASE
 
         # Evaluates if the last average has increased too fast compared to the previous average
@@ -245,7 +252,7 @@ class Notifications:
             if last_average[0] == reading.sensor_name
         ):
 
-            logging.debug(NotificationType.RAPID_INCREASE)
+            logging.debug(f"{reading.event} is {NotificationType.RAPID_INCREASE}")
             return reading, NotificationType.RAPID_INCREASE
 
         else:

@@ -6,24 +6,6 @@ from main import *
 
 
 @pytest.fixture
-def example_temperature_event():
-    temp = 95
-    readings4 = NotecardReading(
-        sensor_name="arduino_1", sensor_reading=temp, sensor_type=SensorType(1)
-    )
-
-    readings = NotecardEvent(
-        datetime=1665021239,
-        event="f3ec6e7b-382b-472b-ad13-c52d7327cf76",
-        best_lat=45.5728875,
-        best_long=-122.66610937499999,
-        readings=[readings4],
-    )
-
-    return readings
-
-
-@pytest.fixture
 def example_temperature_reading(temp, average) -> Reading:
     return Reading(
         datetime=1665021239,
@@ -101,3 +83,25 @@ def test_temperature_exception_handling(example_temperature_reading):
         notification_event = Notifications(queued_notifications=[])
         res = notification_event._evaluate_for_notify_logic(example_temperature_reading)
         print(f"res = {res}")
+
+
+# @pytest.fixture
+# def example_temperature_event():
+#     temp = 95
+#     humid = 45
+#     readings4 = NotecardReading(
+#         sensor_name="arduino_1", sensor_reading=temp, sensor_type=SensorType(1)
+#     )
+#     readings5 = NotecardReading(
+#         sensor_name="arduino_1", sensor_reading=humid, sensor_type=SensorType(2)
+#     )
+
+#     readings = NotecardEvent(
+#         datetime=1665021239,
+#         event="f3ec6e7b-382b-472b-ad13-c52d7327cf76",
+#         best_lat=45.5728875,
+#         best_long=-122.66610937499999,
+#         readings=[readings4, readings5],
+#     )
+
+#     return readings

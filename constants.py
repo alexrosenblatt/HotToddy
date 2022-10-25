@@ -26,7 +26,7 @@ class AirQualityThresholds(IntEnum):
     AVERAGE_INCREASE_DELTA = 11
 
 
-class SensorType(Enum):
+class SensorType(IntEnum):
     TEMPERATURE = 1
     HUMIDITY = 2
     AIRQUALITY = 3
