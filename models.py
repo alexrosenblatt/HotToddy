@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass
-from typing import List, Tuple
+from tarfile import _Bz2ReadableFileobj
+from typing import List, Tuple, Union
 
 from decouple import config  # type: ignore
 from deta import Deta  # type: ignore
@@ -17,11 +18,14 @@ DETA_KEY = config("DETA_KEY")
 
 
 from constants import (
-    AirQualityThresholds,
-    HumidityThresholds,
+    Thresholds,
+    Temperature,
+    Humidity,
+    AirQuality,
     NotificationType,
-    SensorType,
-    TemperatureThresholds,
+    SensorTypes,
+    Thresholds,
+    sensor_configs,
 )
 
 TWILIO_CLIENT_IDS = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
@@ -35,6 +39,12 @@ recent_readings_db = deta.Base("recent_readings")
 last_averages: list[tuple[str, float]] = []
 
 
+@dataclass
+class SensorConfig:
+    sensor_type: SensorTypes
+    threshold: Thresholds
+
+
 @dataclass(repr=True)
 class Reading:
     """An individual reading from a single sensor parsed from Notecard event."""
@@ -46,7 +56,7 @@ class Reading:
     sensor_name: str
     sensor_reading: float
     recent_average: float
-    sensor_type: SensorType
+    sensor_type: SensorTypes
 
     def insert_reading_into_db(self, database, expiration_seconds=0) -> bool:
         """Inserts into Deta.sh Database
@@ -72,7 +82,31 @@ class NotecardReading(BaseModel):
 
     sensor_name: str
     sensor_reading: float
-    sensor_type: SensorType
+    sensor_type: SensorTypes
+
+
+class TwilioPost(BaseModel):
+
+    ToCountry: str
+    ToState: str
+    SmsMessageSid: str
+    NumMedia: str
+    ToCity: str
+    FromZip: str
+    SmsSid: str
+    FromState: str
+    SmsStatus: str
+    FromCity: str
+    Body: str
+    FromCountry: str
+    To: str
+    ToZip: str
+    NumSegments: str
+    ReferralNumMedia: str
+    MessageSid: str
+    AccountSid: str
+    From: str
+    ApiVersion: str
 
 
 class NotecardEvent(BaseModel):
@@ -175,6 +209,8 @@ class Notifications:
                 )
                 body = body.__add__(message)
             self.send_twilio_message(body)
+        else:
+            logging.debug("Not armed")
 
     def send_twilio_message(self, body: str):
         """Calls twilio API with constructed body string.
@@ -209,45 +245,42 @@ class Notifications:
         """
 
         # associates the Reading's sensortype with the appropriate thresholds set in the constant file
-        if reading.sensor_type == SensorType.TEMPERATURE:
-            threshold_type = TemperatureThresholds
-        elif reading.sensor_type == SensorType.HUMIDITY:
-            threshold_type = HumidityThresholds  # type: ignore
-        elif reading.sensor_type == SensorType.AIRQUALITY:
-            threshold_type = AirQualityThresholds  # type: ignore
-        else:
-            raise (ValueError)
+        for sensor_config in sensor_configs:
+            if reading.sensor_type == sensor_config[1]:
+                threshold_type = sensor_config[0]
 
-        # Evaluates if the current average is too high
-        if reading.recent_average >= threshold_type.AVERAGE.value:
-            logging.debug(NotificationType.TOO_HIGH_AVERAGE)
-            return reading, NotificationType.TOO_HIGH_AVERAGE
+                if reading.recent_average >= threshold_type.AVERAGE.value:
+                    logging.debug(NotificationType.TOO_HIGH_AVERAGE)
+                    return reading, NotificationType.TOO_HIGH_AVERAGE
 
-        # Evaluates if any current single reading is too high
-        elif reading.sensor_reading >= threshold_type.SINGLE.value:
-            logging.debug(NotificationType.TOO_HIGH_SINGLE)
-            return reading, NotificationType.TOO_HIGH_SINGLE
+                # Evaluates if any current single reading is too high
+                elif reading.sensor_reading >= threshold_type.SINGLE.value:
+                    logging.debug(NotificationType.TOO_HIGH_SINGLE)
+                    return reading, NotificationType.TOO_HIGH_SINGLE
 
-        # Evaluates if the last reading has increased too fast compared to the average
-        elif (
-            reading.sensor_reading - reading.recent_average
-            >= threshold_type.SINGLE_INCREASE_DELTA.value
-        ):
+                # Evaluates if the last reading has increased too fast compared to the average
+                elif (
+                    reading.sensor_reading - reading.recent_average
+                    >= threshold_type.SINGLE_INCREASE_DELTA.value
+                ):
 
-            logging.debug(NotificationType.RAPID_INCREASE)
-            return reading, NotificationType.RAPID_INCREASE
+                    logging.debug(NotificationType.RAPID_INCREASE)
+                    return reading, NotificationType.RAPID_INCREASE
 
-        # Evaluates if the last average has increased too fast compared to the previous average
-        elif (
-            last_average[1] - reading.recent_average
-            >= threshold_type.AVERAGE_INCREASE_DELTA.value
-            for last_average in last_averages
-            if last_average[0] == reading.sensor_name
-        ):
+                # Evaluates if the last average has increased too fast compared to the previous average
+                elif (
+                    last_average[1] - reading.recent_average
+                    >= threshold_type.AVERAGE_INCREASE_DELTA.value
+                    for last_average in last_averages
+                    if last_average[0] == reading.sensor_name
+                ):
 
-            logging.debug(NotificationType.RAPID_INCREASE)
-            return reading, NotificationType.RAPID_INCREASE
+                    logging.debug(NotificationType.RAPID_INCREASE)
+                    return reading, NotificationType.RAPID_INCREASE
 
-        else:
-            logging.debug("no notification triggered")
-            return reading, NotificationType.NOOP
+                else:
+                    logging.debug("no notification triggered")
+                    return reading, NotificationType.NOOP
+            else:
+                raise (ValueError)
+        return reading, NotificationType.NOOP

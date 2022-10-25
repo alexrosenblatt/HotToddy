@@ -1,6 +1,6 @@
 import pytest  # type: ignore
 
-from constants import NotificationType, SensorType, TemperatureThresholds
+from constants import *
 from models import *
 from main import *
 
@@ -9,7 +9,7 @@ from main import *
 def example_temperature_event():
     temp = 95
     readings4 = NotecardReading(
-        sensor_name="arduino_1", sensor_reading=temp, sensor_type=SensorType(1)
+        sensor_name="arduino_1", sensor_reading=temp, sensor_type=SensorTypes(1)
     )
 
     readings = NotecardEvent(
@@ -31,7 +31,7 @@ def example_temperature_reading(temp, average) -> Reading:
         best_lat=45.5728875,
         best_long=-122.66610937499999,
         sensor_name="arduino1",
-        sensor_type=SensorType(1),
+        sensor_type=SensorTypes(1),
         sensor_reading=temp,
         recent_average=average,
     )
@@ -41,8 +41,8 @@ def example_temperature_reading(temp, average) -> Reading:
     "temp,average",
     [
         (
-            5 + TemperatureThresholds.SINGLE.value,
-            TemperatureThresholds.AVERAGE.value - 5,
+            5 + Temperature.SINGLE.value,
+            Temperature.AVERAGE.value - 5,
         ),
         (2000000000000000000, -56),
     ],
@@ -58,8 +58,8 @@ def test_temperature_too_high(example_temperature_reading):
     "temp,average",
     [
         (
-            TemperatureThresholds.SINGLE.value - 4,
-            5 + TemperatureThresholds.AVERAGE.value,
+            Temperature.SINGLE.value - 4,
+            5 + Temperature.AVERAGE.value,
         ),
         (-54, 200000000000000),
     ],
@@ -75,13 +75,10 @@ def test_average_temperature_too_high(example_temperature_reading):
     "temp,average",
     [
         (
-            TemperatureThresholds.SINGLE.value - 1,
-            TemperatureThresholds.SINGLE.value
+            Temperature.SINGLE.value - 1,
+            Temperature.SINGLE.value
             - 1
-            - (
-                TemperatureThresholds.SINGLE.value
-                - TemperatureThresholds.SINGLE_INCREASE_DELTA.value
-            ),
+            - (Temperature.SINGLE.value - Temperature.SINGLE_INCREASE_DELTA.value),
         ),
     ],
 )
