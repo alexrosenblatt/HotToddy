@@ -1,7 +1,6 @@
 import logging
 from dataclasses import dataclass
-from tarfile import _Bz2ReadableFileobj
-from typing import List, Tuple, Union
+from typing import List, Tuple
 
 from decouple import config  # type: ignore
 from deta import Deta  # type: ignore
