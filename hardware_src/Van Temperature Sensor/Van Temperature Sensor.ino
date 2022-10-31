@@ -89,11 +89,13 @@ void loop() {
         if (sensor_1) {
           JAddStringToObject(sensor_1, "sensor_name", "notecard");
           JAddNumberToObject(sensor_1, "sensor_reading", cardtemperature);
+          JAddNumberToObject(sensor_1, "sensor_type", 1);
         }
         J *sensor_2 = JAddObjectToObject(readings, "sensor_2");
         if (sensor_2) {
           JAddStringToObject(sensor_2, "sensor_name", "arduino_1");
           JAddNumberToObject(sensor_2, "sensor_reading", temperatureF);
+          JAddNumberToObject(sensor_1, "sensor_type", 1);
       }
     }
     notecard.sendRequest(req);

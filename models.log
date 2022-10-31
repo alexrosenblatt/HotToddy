@@ -64,3 +64,6 @@ DEBUG:urllib3.connectionpool:Starting new HTTPS connection (1): api.twilio.com:4
 DEBUG:urllib3.connectionpool:https://api.twilio.com:443 "POST /2010-04-01/Accounts/ACefcec33b19c3caff117e887becc55b1f/Messages.json HTTP/1.1" 201 978
 INFO:twilio.http_client:Response Status Code: 201
 INFO:twilio.http_client:Response Headers: {'Date': 'Tue, 25 Oct 2022 21:10:27 GMT', 'Content-Type': 'application/json; charset=utf-8', 'Content-Length': '978', 'Connection': 'keep-alive', 'Twilio-Concurrent-Requests': '1', 'Twilio-Request-Id': 'RQcbc79665f7733017b35a3775dd6530b2', 'Twilio-Request-Duration': '0.135', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Accept, Authorization, Content-Type, If-Match, If-Modified-Since, If-None-Match, If-Unmodified-Since', 'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS', 'Access-Control-Expose-Headers': 'ETag', 'Access-Control-Allow-Credentials': 'true', 'X-Powered-By': 'AT-5000', 'X-Shenanigans': 'none', 'X-Home-Region': 'us1', 'X-API-Domain': 'api.twilio.com', 'Strict-Transport-Security': 'max-age=31536000'}
+DEBUG:root:NotificationType.RAPID_INCREASE
+DEBUG:root:NotificationType.RAPID_INCREASE
+DEBUG:root:NotificationType.RAPID_INCREASE

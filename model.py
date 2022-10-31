@@ -11,11 +11,6 @@ from twilio.rest import Client  # type: ignore
 logging.basicConfig(filename="models.log", encoding="utf-8", level=logging.DEBUG)
 
 
-TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
-DETA_KEY = config("DETA_KEY")
-
-
 from constants import (
     Thresholds,
     Temperature,
@@ -26,6 +21,11 @@ from constants import (
     Thresholds,
     sensor_configs,
 )
+
+TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
+TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
+DETA_KEY = config("DETA_KEY")
+
 
 TWILIO_CLIENT_IDS = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
@@ -69,7 +69,10 @@ class Reading:
             bool: Returns true if succesful, otherwise exception
         """
         try:
-            database.put(self.__dict__, expire_in=expiration_seconds)
+            db_response = database.put(self.__dict__, expire_in=expiration_seconds)
+            print(db_response)
+            logging.debug(f"inserted reading into {database.name}")
+            print(f"inserted reading into {database.name}")
             return True
         except:
             return False
@@ -192,6 +195,7 @@ class Notifications:
         notification_result = self._evaluate_for_notify_logic(reading)
         if notification_result[1] != NotificationType.NOOP:
             self.queued_notifications.append(notification_result)
+            logging.debug(f"Appended {notification_result} to notification queue.")
             return True
         else:
             return False
