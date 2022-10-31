@@ -3,7 +3,6 @@ from fastapi import FastAPI, Response, Form
 from twilio.twiml.messaging_response import MessagingResponse  # type: ignore
 from constants import CacheConfig
 
-
 import model as m
 
 is_armed: bool = False
