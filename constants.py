@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum, IntEnum
+import enum
 from typing import Type, List, Union
 from pydantic import BaseModel, TupleError
 
@@ -12,6 +13,10 @@ class SensorTypes(Enum):
     TEMPERATURE = 1
     HUMIDITY = 2
     AIRQUALITY = 3
+
+
+class test(enum):
+    pass
 
 
 class Thresholds(Enum):
