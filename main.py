@@ -5,7 +5,7 @@ from constants import CacheConfig
 
 import model as m
 
-is_armed: bool = False
+is_armed: bool = True
 
 # a POST route for webhook events to ingest readings, utilizes FastApi
 @m.app.post("/")
