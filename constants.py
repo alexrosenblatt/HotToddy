@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum, IntEnum
-import enum
 from typing import Type, List, Union
 from pydantic import BaseModel, TupleError
 
@@ -15,7 +14,8 @@ class SensorTypes(Enum):
     AIRQUALITY = 3
 
 
-class test(enum):
+class test(Enum):
+    TEST = 2
     pass
 
 
