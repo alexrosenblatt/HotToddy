@@ -8,7 +8,7 @@ class CacheConfig(IntEnum):
     EXPIRATION_TIME = 360
 
 
-class SensorTypes(Enum):
+class SensorTypes(IntEnum):
     TEMPERATURE = 1
     HUMIDITY = 2
     AIRQUALITY = 3

@@ -2,19 +2,21 @@ from fastapi import FastAPI, Response, Form
 
 from twilio.twiml.messaging_response import MessagingResponse  # type: ignore
 from constants import CacheConfig
-
 import model as m
+import logging as logging
 
 is_armed: bool = True
 
 # a POST route for webhook events to ingest readings, utilizes FastApi
 @m.app.post("/")
 def sensor_event(event: m.NotecardEvent) -> m.NotecardEvent:
+    logging.debug(f"event triggered at {event.datetime}")
     notification_event = m.Notifications(queued_notifications=[])
     parsed_readings = m.NotecardEvent.parse_event(event)
 
     # inserts individual reading into a persistent database (all_readings_db) and a cache to support recent average calculation (recent_readings_db)
     for reading in parsed_readings:
+        logging.debug(f"{reading} into db")
         reading.insert_reading_into_db(
             database=m.all_readings_db,
         )
