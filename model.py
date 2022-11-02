@@ -68,14 +68,14 @@ class Reading:
         Returns:
             bool: Returns true if succesful, otherwise exception
         """
-        # try:
-        db_response = database.put(self.__dict__, expire_in=expiration_seconds)
-        print(db_response)
-        logging.debug(f"inserted reading into {database}")
-        print(f"inserted reading into {database}")
-        return True
-        # except:
-        #     return False
+        try:
+            db_response = database.put(self.__dict__, expire_in=expiration_seconds)
+            print(db_response)
+            logging.debug(f"inserted reading into {database}")
+            print(f"inserted reading into {database}")
+            return True
+        except:
+            return False
 
 
 class NotecardReading(BaseModel):
