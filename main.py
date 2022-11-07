@@ -19,10 +19,10 @@ def sensor_event(event: m.SensorLogEvent) -> m.SensorLogEvent:
     # inserts individual reading into a persistent database (all_readings_db) and a cache to support recent average calculation (recent_readings_db)
     for reading in parsed_readings:
         logging.debug(f"{reading} into db")
-        reading.insert_reading_into_db(
+        reading.insert_parsed_reading_into_db(
             database=m.all_readings_db,
         )
-        reading.insert_reading_into_db(
+        reading.insert_parsed_reading_into_db(
             database=m.recent_readings_db,
             expiration_seconds=CacheConfig.EXPIRATION_TIME.value,
         )

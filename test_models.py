@@ -3,6 +3,10 @@ import pytest  # type: ignore
 import constants as c
 import model as model
 
+temp_config = c.SensorConfig(sensor_type=c.SensorTypes(1))
+humidity_config = c.SensorConfig(sensor_type=c.SensorTypes(2))
+air_quality_config = c.SensorConfig(sensor_type=c.SensorTypes(3))
+
 
 @pytest.fixture
 def example_temperature_event():
@@ -23,14 +27,14 @@ def example_temperature_event():
 
 
 @pytest.fixture
-def example_temperature_reading(temp, average) -> model.Reading:
-    return model.Reading(
+def example_temperature_reading(temp, average) -> model.ParsedReading:
+    return model.ParsedReading(
         datetime=1665021239,
         event="f3ec6e7b-382b-472b-ad13-c52d7327cf76",
         best_lat=45.5728875,
         best_long=-122.66610937499999,
         sensor_name="arduino1",
-        sensor_type=c.SensorTypes(1),
+        sensor_config=c.SensorConfig(c.SensorTypes(1)),
         sensor_reading=temp,
         recent_average=average,
     )
@@ -40,8 +44,8 @@ def example_temperature_reading(temp, average) -> model.Reading:
     "temp,average",
     [
         (
-            5 + c.Temperature.SINGLE.value,
-            c.Temperature.AVERAGE.value - 5,
+            5 + temp_config.thresholds["single_reading"],
+            temp_config.thresholds["average"] - 5,
         ),
         (2000000000000000000, -56),
     ],
@@ -57,8 +61,8 @@ def test_temperature_too_high(example_temperature_reading):
     "temp,average",
     [
         (
-            c.Temperature.SINGLE.value - 4,
-            5 + c.Temperature.AVERAGE.value,
+            temp_config.thresholds["single_reading"] - 4,
+            temp_config.thresholds["average"],
         ),
         (-54, 200000000000000),
     ],
@@ -74,10 +78,13 @@ def test_average_temperature_too_high(example_temperature_reading):
     "temp,average",
     [
         (
-            c.Temperature.SINGLE.value - 1,
-            c.Temperature.SINGLE.value
+            temp_config.thresholds["single_reading"] - 1,
+            temp_config.thresholds["single_reading"]
             - 1
-            - (c.Temperature.SINGLE.value - c.Temperature.SINGLE_INCREASE_DELTA.value),
+            - (
+                temp_config.thresholds["single_reading"]
+                - temp_config.thresholds["single_increase_change"]
+            ),
         ),
     ],
 )

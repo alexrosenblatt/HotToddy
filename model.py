@@ -30,7 +30,7 @@ last_averages: list[tuple[str, float]] = []
 
 
 @dataclass(repr=True)
-class Reading:
+class ParsedReading:
     """An individual reading from a single sensor parsed from SensorLogging event."""
 
     datetime: int
@@ -42,7 +42,7 @@ class Reading:
     recent_average: float
     sensor_config: SensorConfig
 
-    def insert_reading_into_db(self, database, expiration_seconds=0) -> bool:
+    def insert_parsed_reading_into_db(self, database, expiration_seconds=0) -> bool:
         """Inserts into Deta.sh Database
 
         Args:
@@ -87,8 +87,7 @@ class SensorLogReading(BaseModel):
 
 
 class SensorLogEvent(BaseModel):
-    """Defines webhook event for ingestion by FastAPI. 'readings' is a list of captures from all sensors. Currently called "Notecard event"
-    as the primary caller is from the Notecard IOT service. In the future, could be generecized."""
+    """Defines webhook event for ingestion by FastAPI. 'readings' is a list of captures from all sensors.  In the future, could be generecized."""
 
     datetime: int
     event: str
@@ -96,7 +95,7 @@ class SensorLogEvent(BaseModel):
     best_long: float
     readings: List[SensorLogReading]
 
-    def parse_event(self) -> list[Reading]:
+    def parse_event(self) -> list[ParsedReading]:
         """Deserializes SensorLogEvent into individual readings for storage.
 
         Args:
@@ -106,7 +105,7 @@ class SensorLogEvent(BaseModel):
             list:List of events split by individual sensor reading. If initial api call has 5 readings, this returns a list of 5
         """
         return [
-            Reading(
+            ParsedReading(
                 datetime=self.datetime,
                 event=self.event,
                 best_lat=self.best_lat,
@@ -155,9 +154,9 @@ class Notifications:
     """Handles evaluation for when to notify based on Reading state and mechanics for notification.
     Currently just twilio sms, could be extended to another service."""
 
-    queued_notifications: List[tuple[Reading, NotificationType]]
+    queued_notifications: List[tuple[ParsedReading, NotificationType]]
 
-    def evaluate_for_notify(self, reading: Reading) -> bool:
+    def evaluate_for_notify(self, reading: ParsedReading) -> bool:
         """Wrapper for main notification evaluation logic - parses return from _evaluate_for_notify_logic and appends
         the reading to be sent.
 
@@ -181,10 +180,8 @@ class Notifications:
 
         if len(self.queued_notifications) >= 1:
             body: str = ""
-            for qn in self.queued_notifications:
-                message = (
-                    f"{qn[0].sensor_name}, Reading: {qn[0].recent_average}, {qn[1]} \n"
-                )
+            for notification in self.queued_notifications:
+                message = f"{notification[0].sensor_name}, Reading: {notification[0].recent_average}, {notification[1]} \n"
                 body = body.__add__(message)
             self.send_twilio_message(body)
         else:
@@ -211,8 +208,8 @@ class Notifications:
         return self.queued_notifications
 
     def _evaluate_for_notify_logic(
-        self, reading: Reading
-    ) -> Tuple[Reading, NotificationType]:
+        self, parsed_reading: ParsedReading
+    ) -> Tuple[ParsedReading, NotificationType]:
         """Main logic to evaluate if a notification needs to be sent based on the ingested sensor data.
 
         Args:
@@ -222,37 +219,41 @@ class Notifications:
             Tuple[Reading, NotificationType]: Returns the Reading object and the constant associated with the notification reason. Returns a NOOP if no notification is to be sent."
         """
 
-        if reading.recent_average >= reading.sensor_config.thresholds["average"]:
+        if (
+            parsed_reading.recent_average
+            >= parsed_reading.sensor_config.thresholds["average"]
+        ):
             logging.debug(NotificationType.TOO_HIGH_AVERAGE)
-            return reading, NotificationType.TOO_HIGH_AVERAGE
+            return parsed_reading, NotificationType.TOO_HIGH_AVERAGE
 
         # Evaluates if any current single reading is too high
         elif (
-            reading.sensor_reading >= reading.sensor_config.thresholds["single_reading"]
+            parsed_reading.sensor_reading
+            >= parsed_reading.sensor_config.thresholds["single_reading"]
         ):
             logging.debug(NotificationType.TOO_HIGH_SINGLE)
-            return reading, NotificationType.TOO_HIGH_SINGLE
+            return parsed_reading, NotificationType.TOO_HIGH_SINGLE
 
         # Evaluates if the last reading has increased too fast compared to the average
         elif (
-            reading.sensor_reading - reading.recent_average
-            >= reading.sensor_config.thresholds["single_increase_change"]
+            parsed_reading.sensor_reading - parsed_reading.recent_average
+            >= parsed_reading.sensor_config.thresholds["single_increase_change"]
         ):
 
             logging.debug(NotificationType.RAPID_INCREASE)
-            return reading, NotificationType.RAPID_INCREASE
+            return parsed_reading, NotificationType.RAPID_INCREASE
 
         # Evaluates if the last average has increased too fast compared to the previous average
         elif (
-            last_average[1] - reading.recent_average
-            >= reading.sensor_config.thresholds["average_increase_change"]
+            last_average[1] - parsed_reading.recent_average
+            >= parsed_reading.sensor_config.thresholds["average_increase_change"]
             for last_average in last_averages
-            if last_average[0] == reading.sensor_name
+            if last_average[0] == parsed_reading.sensor_name
         ):
 
             logging.debug(NotificationType.RAPID_INCREASE)
-            return reading, NotificationType.RAPID_INCREASE
+            return parsed_reading, NotificationType.RAPID_INCREASE
 
         else:
             logging.debug("no notification triggered")
-            return reading, NotificationType.NOOP
+            return parsed_reading, NotificationType.NOOP
