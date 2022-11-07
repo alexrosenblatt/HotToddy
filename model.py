@@ -40,7 +40,7 @@ class Reading:
     sensor_name: str
     sensor_reading: float
     recent_average: float
-    sensor_type: SensorTypes
+    sensor_config: SensorConfig
 
     def insert_reading_into_db(self, database, expiration_seconds=0) -> bool:
         """Inserts into Deta.sh Database
@@ -54,13 +54,27 @@ class Reading:
             bool: Returns true if succesful, otherwise exception
         """
         try:
-            db_response = database.put(self.__dict__, expire_in=expiration_seconds)
-            print(db_response)
+            print(self.__dict__)
+            db_response = database.put(
+                self.parse_for_db_save(), expire_in=expiration_seconds
+            )
+            logging.debug(db_response)
             logging.debug(f"inserted reading into {database}")
-            print(f"inserted reading into {database}")
             return True
         except:
-            return False
+            raise MemoryError
+
+    def parse_for_db_save(self):
+        return {
+            "datetime": self.datetime,
+            "event": self.event,
+            "best_lat": self.best_lat,
+            "best_long": self.best_long,
+            "sensor_name": self.sensor_name,
+            "sensor_reading": self.sensor_reading,
+            "recent_average": self.recent_average,
+            "sensor_type": self.sensor_config.sensor_type,
+        }
 
 
 class SensorLogReading(BaseModel):
@@ -98,7 +112,7 @@ class SensorLogEvent(BaseModel):
                 best_lat=self.best_lat,
                 best_long=self.best_long,
                 sensor_name=r.sensor_name,
-                sensor_type=r.sensor_type,
+                sensor_config=SensorConfig(r.sensor_type),
                 sensor_reading=r.sensor_reading,
                 recent_average=self.compute_recent_sensor_averages(
                     r.sensor_name, r.sensor_reading
@@ -208,43 +222,37 @@ class Notifications:
             Tuple[Reading, NotificationType]: Returns the Reading object and the constant associated with the notification reason. Returns a NOOP if no notification is to be sent."
         """
 
-        # associates the Reading's sensortype with the appropriate thresholds set in the constant file
-        for sensor_config in sensor_configs:
-            if reading.sensor_type == sensor_config[1]:
-                threshold_type = sensor_config[0]
+        if reading.recent_average >= reading.sensor_config.thresholds["average"]:
+            logging.debug(NotificationType.TOO_HIGH_AVERAGE)
+            return reading, NotificationType.TOO_HIGH_AVERAGE
 
-                if reading.recent_average >= threshold_type.AVERAGE.value:
-                    logging.debug(NotificationType.TOO_HIGH_AVERAGE)
-                    return reading, NotificationType.TOO_HIGH_AVERAGE
+        # Evaluates if any current single reading is too high
+        elif (
+            reading.sensor_reading >= reading.sensor_config.thresholds["single_reading"]
+        ):
+            logging.debug(NotificationType.TOO_HIGH_SINGLE)
+            return reading, NotificationType.TOO_HIGH_SINGLE
 
-                # Evaluates if any current single reading is too high
-                elif reading.sensor_reading >= threshold_type.SINGLE.value:
-                    logging.debug(NotificationType.TOO_HIGH_SINGLE)
-                    return reading, NotificationType.TOO_HIGH_SINGLE
+        # Evaluates if the last reading has increased too fast compared to the average
+        elif (
+            reading.sensor_reading - reading.recent_average
+            >= reading.sensor_config.thresholds["single_increase_change"]
+        ):
 
-                # Evaluates if the last reading has increased too fast compared to the average
-                elif (
-                    reading.sensor_reading - reading.recent_average
-                    >= threshold_type.SINGLE_INCREASE_DELTA.value
-                ):
+            logging.debug(NotificationType.RAPID_INCREASE)
+            return reading, NotificationType.RAPID_INCREASE
 
-                    logging.debug(NotificationType.RAPID_INCREASE)
-                    return reading, NotificationType.RAPID_INCREASE
+        # Evaluates if the last average has increased too fast compared to the previous average
+        elif (
+            last_average[1] - reading.recent_average
+            >= reading.sensor_config.thresholds["average_increase_change"]
+            for last_average in last_averages
+            if last_average[0] == reading.sensor_name
+        ):
 
-                # Evaluates if the last average has increased too fast compared to the previous average
-                elif (
-                    last_average[1] - reading.recent_average
-                    >= threshold_type.AVERAGE_INCREASE_DELTA.value
-                    for last_average in last_averages
-                    if last_average[0] == reading.sensor_name
-                ):
+            logging.debug(NotificationType.RAPID_INCREASE)
+            return reading, NotificationType.RAPID_INCREASE
 
-                    logging.debug(NotificationType.RAPID_INCREASE)
-                    return reading, NotificationType.RAPID_INCREASE
-
-                else:
-                    logging.debug("no notification triggered")
-                    return reading, NotificationType.NOOP
-            else:
-                raise (ValueError)
-        return reading, NotificationType.NOOP
+        else:
+            logging.debug("no notification triggered")
+            return reading, NotificationType.NOOP

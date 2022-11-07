@@ -72,27 +72,24 @@ def get_arm_state():
     return is_armed
 
 
-temp_config = SensorConfig(SensorTypes.TEMPERATURE)
-print(temp_config)
-
 # below is used for testing
 
-# readings1 = m.SensorLogReading(``
-#     sensor_name="arduino_1", sensor_reading=10, sensor_type=m.SensorTypes(1)
-# )
-# readings2 = m.SensorLogReading(
-#     sensor_name="notecard", sensor_reading=10, sensor_type=m.SensorTypes(1)
-# )
-# readings3 = m.SensorLogReading(
-#     sensor_name="notecard2", sensor_reading=10, sensor_type=m.SensorTypes(1)
-# )
+readings1 = m.SensorLogReading(
+    sensor_name="arduino_1", sensor_reading=10, sensor_type=m.SensorTypes(1)
+)
+readings2 = m.SensorLogReading(
+    sensor_name="notecard", sensor_reading=10, sensor_type=m.SensorTypes(1)
+)
+readings3 = m.SensorLogReading(
+    sensor_name="notecard2", sensor_reading=10, sensor_type=m.SensorTypes(1)
+)
 
-# testevent = m.SensorLogEvent(
-#     datetime=1665021239,
-#     event="f3ec6e7b-382b-472b-ad13-c52d7327cf76",
-#     best_lat=45.5728875,
-#     best_long=-122.66610937499999,
-#     readings=[readings1, readings2, readings3],
-# )
+testevent = m.SensorLogEvent(
+    datetime=1665021239,
+    event="f3ec6e7b-382b-472b-ad13-c52d7327cf76",
+    best_lat=45.5728875,
+    best_long=-122.66610937499999,
+    readings=[readings1, readings2, readings3],
+)
 
-# sensor_event(testevent)
+sensor_event(testevent)

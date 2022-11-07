@@ -1,5 +1,4 @@
 from enum import Enum, IntEnum
-from typing import Type, List, Union
 from dataclasses import dataclass, field
 
 
@@ -16,27 +15,27 @@ class SensorTypes(IntEnum):
 @dataclass
 class SensorConfig:
     sensor_type: SensorTypes
-    thresholds: dict = field(init=False)
+    thresholds: dict[str, int] = field(init=False, default_factory=dict)
 
     def __post_init__(self):
         if self.sensor_type == SensorTypes.TEMPERATURE:
-            self.thresholds = {
+            self.thresholds: dict[str, int] = {
                 "average": 80,
-                "single_reading_limit": 80,
+                "single_reading": 80,
                 "single_increase_change": 10,
                 "average_increase_change": 10,
             }
         elif self.sensor_type == SensorTypes.HUMIDITY:
-            self.thresholds = {
+            self.thresholds: dict[str, int] = {
                 "average": 30,
-                "single_reading_limit": 50,
+                "single_reading": 50,
                 "single_increase_change": 5,
                 "average_increase_change": 5,
             }
         elif self.sensor_type == SensorTypes.AIRQUALITY:
-            self.thresholds = {
+            self.thresholds: dict[str, int] = {
                 "average": 35,
-                "single_reading_limit": 90,
+                "single_reading": 90,
                 "single_increase_change": 15,
                 "average_increase_change": 15,
             }
