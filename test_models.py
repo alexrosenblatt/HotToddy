@@ -7,11 +7,11 @@ import model as model
 @pytest.fixture
 def example_temperature_event():
     temp = 95
-    readings4 = model.NotecardReading(
+    readings4 = model.SensorLogReading(
         sensor_name="arduino_1", sensor_reading=temp, sensor_type=c.SensorTypes(1)
     )
 
-    readings = model.NotecardEvent(
+    readings = model.SensorLogEvent(
         datetime=1665021239,
         event="f3ec6e7b-382b-472b-ad13-c52d7327cf76",
         best_lat=45.5728875,

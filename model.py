@@ -12,10 +12,6 @@ logging.basicConfig(filename="models.log", encoding="utf-8", level=logging.DEBUG
 
 
 from constants import (
-    Thresholds,
-    Temperature,
-    Humidity,
-    AirQuality,
     NotificationType,
     SensorTypes,
     Thresholds,
@@ -46,7 +42,7 @@ class SensorConfig:
 
 @dataclass(repr=True)
 class Reading:
-    """An individual reading from a single sensor parsed from Notecard event."""
+    """An individual reading from a single sensor parsed from SensorLogging event."""
 
     datetime: int
     event: str
@@ -78,7 +74,7 @@ class Reading:
             return False
 
 
-class NotecardReading(BaseModel):
+class SensorLogReading(BaseModel):
     """An individual capture from a single sensor contained within a single webhook event.
     Thrown away after parsing into an individual Reading object."""
 
@@ -87,31 +83,7 @@ class NotecardReading(BaseModel):
     sensor_type: SensorTypes
 
 
-class TwilioPost(BaseModel):
-
-    ToCountry: str
-    ToState: str
-    SmsMessageSid: str
-    NumMedia: str
-    ToCity: str
-    FromZip: str
-    SmsSid: str
-    FromState: str
-    SmsStatus: str
-    FromCity: str
-    Body: str
-    FromCountry: str
-    To: str
-    ToZip: str
-    NumSegments: str
-    ReferralNumMedia: str
-    MessageSid: str
-    AccountSid: str
-    From: str
-    ApiVersion: str
-
-
-class NotecardEvent(BaseModel):
+class SensorLogEvent(BaseModel):
     """Defines webhook event for ingestion by FastAPI. 'readings' is a list of captures from all sensors. Currently called "Notecard event"
     as the primary caller is from the Notecard IOT service. In the future, could be generecized."""
 
@@ -119,7 +91,7 @@ class NotecardEvent(BaseModel):
     event: str
     best_lat: float
     best_long: float
-    readings: List[NotecardReading]
+    readings: List[SensorLogReading]
 
     def parse_event(self) -> list[Reading]:
         """Deserializes NotecardEvent into individual readings for storage.
