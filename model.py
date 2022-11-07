@@ -11,12 +11,7 @@ from twilio.rest import Client  # type: ignore
 logging.basicConfig(filename="models.log", encoding="utf-8", level=logging.DEBUG)
 
 
-from constants import (
-    NotificationType,
-    SensorTypes,
-    Thresholds,
-    sensor_configs,
-)
+from constants import NotificationType, SensorTypes, SensorConfig
 
 TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
@@ -32,12 +27,6 @@ all_readings_db = deta.Base("therm-all-readings")
 recent_readings_db = deta.Base("recent_readings")
 
 last_averages: list[tuple[str, float]] = []
-
-
-@dataclass
-class SensorConfig:
-    sensor_type: SensorTypes
-    threshold: Thresholds
 
 
 @dataclass(repr=True)

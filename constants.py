@@ -1,7 +1,6 @@
-from dataclasses import dataclass
 from enum import Enum, IntEnum
 from typing import Type, List, Union
-from pydantic import BaseModel, TupleError
+from dataclasses import dataclass
 
 
 class CacheConfig(IntEnum):
@@ -14,29 +13,41 @@ class SensorTypes(IntEnum):
     AIRQUALITY = 3
 
 
-class Thresholds(Enum):
-    pass
+@dataclass
+class SensorConfig:
+    sensor_type = SensorTypes
+    thresholds = {
+        "average": int,
+        "single_reading_limit": int,
+        "single_increase_change": int,
+        "average_increase_change": int,
+    }
 
+    def __init__(self, sensor_type) -> None:
+        sensor_type = sensor_type
 
-class Temperature(Thresholds):
-    AVERAGE = 80
-    SINGLE = 80
-    SINGLE_INCREASE_DELTA = 10
-    AVERAGE_INCREASE_DELTA = 10
-
-
-class Humidity(Thresholds):
-    AVERAGE = 40
-    SINGLE = 20
-    SINGLE_INCREASE_DELTA = 17
-    AVERAGE_INCREASE_DELTA = 9
-
-
-class AirQuality(Thresholds):
-    AVERAGE = 35
-    SINGLE = 90
-    SINGLE_INCREASE_DELTA = 15
-    AVERAGE_INCREASE_DELTA = 11
+    def __post_init__(self):
+        if self.sensor_type == SensorTypes.TEMPERATURE:
+            self.thresholds = {
+                "average": 80,
+                "single_reading_limit": 80,
+                "single_increase_change": 10,
+                "average_increase_change": 10,
+            }
+        elif self.sensor_type == SensorTypes.HUMIDITY:
+            self.thresholds = {
+                "average": 30,
+                "single_reading_limit": 50,
+                "single_increase_change": 5,
+                "average_increase_change": 5,
+            }
+        elif self.sensor_type == SensorTypes.AIRQUALITY:
+            self.thresholds = {
+                "average": 35,
+                "single_reading_limit": 90,
+                "single_increase_change": 15,
+                "average_increase_change": 15,
+            }
 
 
 class NotificationType(Enum):
@@ -49,10 +60,10 @@ class NotificationType(Enum):
     NOOP = 7
 
 
-sensor_configs: List[
-    tuple[Union[Type[Temperature], Type[Humidity], Type[AirQuality]], SensorTypes]
-] = [
-    (Temperature, SensorTypes.TEMPERATURE),
-    (Humidity, SensorTypes.HUMIDITY),
-    (AirQuality, SensorTypes.AIRQUALITY),
-]
+# sensor_configs: List[
+#     tuple[Union[Type[Temperature], Type[Humidity], Type[AirQuality]], SensorTypes]
+# ] = [
+#     (Temperature, SensorTypes.TEMPERATURE),
+#     (Humidity, SensorTypes.HUMIDITY),
+#     (AirQuality, SensorTypes.AIRQUALITY),
+# ]
