@@ -94,10 +94,10 @@ class SensorLogEvent(BaseModel):
     readings: List[SensorLogReading]
 
     def parse_event(self) -> list[Reading]:
-        """Deserializes NotecardEvent into individual readings for storage.
+        """Deserializes SensorLogEvent into individual readings for storage.
 
         Args:
-            notecard_event (NotecardEvent): Event produced by / API call
+            notecard_event (SensorLogEvent): Event produced by / API call
 
         Returns:
             list:List of events split by individual sensor reading. If initial api call has 5 readings, this returns a list of 5

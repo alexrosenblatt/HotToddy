@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Response, Form
+from fastapi import Response, Form
 
 from twilio.twiml.messaging_response import MessagingResponse  # type: ignore
 from constants import CacheConfig

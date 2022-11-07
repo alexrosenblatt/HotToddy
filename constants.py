@@ -14,11 +14,6 @@ class SensorTypes(IntEnum):
     AIRQUALITY = 3
 
 
-class test(Enum):
-    TEST = 2
-    pass
-
-
 class Thresholds(Enum):
     pass
 
