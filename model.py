@@ -86,7 +86,7 @@ class SensorLogEvent(BaseModel):
         """Deserializes SensorLogEvent into individual readings for storage.
 
         Args:
-            notecard_event (SensorLogEvent): Event produced by / API call
+            sensor_log_event (SensorLogEvent): Event produced by / API call
 
         Returns:
             list:List of events split by individual sensor reading. If initial api call has 5 readings, this returns a list of 5

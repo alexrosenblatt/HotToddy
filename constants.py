@@ -1,6 +1,6 @@
 from enum import Enum, IntEnum
 from typing import Type, List, Union
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 class CacheConfig(IntEnum):
@@ -15,16 +15,8 @@ class SensorTypes(IntEnum):
 
 @dataclass
 class SensorConfig:
-    sensor_type = SensorTypes
-    thresholds = {
-        "average": int,
-        "single_reading_limit": int,
-        "single_increase_change": int,
-        "average_increase_change": int,
-    }
-
-    def __init__(self, sensor_type) -> None:
-        sensor_type = sensor_type
+    sensor_type: SensorTypes
+    thresholds: dict = field(init=False)
 
     def __post_init__(self):
         if self.sensor_type == SensorTypes.TEMPERATURE:
