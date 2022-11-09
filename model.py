@@ -21,7 +21,7 @@ DETA_KEY = config("DETA_KEY")
 TWILIO_CLIENT_IDS = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 app = FastAPI()
-deta = deta = Deta(DETA_KEY)  # type: ignore
+deta = Deta(DETA_KEY)  # type: ignore
 
 all_readings_db = deta.Base("therm-all-readings")
 recent_readings_db = deta.Base("recent_readings")
@@ -54,14 +54,13 @@ class ParsedReading:
             bool: Returns true if succesful, otherwise exception
         """
         try:
-            print(self.__dict__)
             db_response = database.put(
                 self.parse_for_db_save(), expire_in=expiration_seconds
             )
-            logging.debug(db_response)
-            logging.debug(f"inserted reading into {database}")
+            logging.debug(f"inserted {db_response} reading into {database}")
             return True
         except:
+            logging.debug(f"failed to insert reading into {database}")
             raise MemoryError
 
     def parse_for_db_save(self):

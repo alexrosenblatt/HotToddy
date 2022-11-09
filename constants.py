@@ -19,21 +19,21 @@ class SensorConfig:
 
     def __post_init__(self):
         if self.sensor_type == SensorTypes.TEMPERATURE:
-            self.thresholds: dict[str, int] = {
+            self.thresholds = {
                 "average": 80,
                 "single_reading": 80,
                 "single_increase_change": 10,
                 "average_increase_change": 10,
             }
         elif self.sensor_type == SensorTypes.HUMIDITY:
-            self.thresholds: dict[str, int] = {
+            self.thresholds = {
                 "average": 30,
                 "single_reading": 50,
                 "single_increase_change": 5,
                 "average_increase_change": 5,
             }
         elif self.sensor_type == SensorTypes.AIRQUALITY:
-            self.thresholds: dict[str, int] = {
+            self.thresholds = {
                 "average": 35,
                 "single_reading": 90,
                 "single_increase_change": 15,

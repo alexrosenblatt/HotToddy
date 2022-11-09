@@ -1,7 +1,7 @@
 from fastapi import Response, Form
 
 from twilio.twiml.messaging_response import MessagingResponse  # type: ignore
-from constants import CacheConfig, SensorConfig, SensorTypes
+from constants import CacheConfig
 import model as m
 import logging as logging
 
