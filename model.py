@@ -1,4 +1,5 @@
 import logging
+import time
 from dataclasses import dataclass
 from typing import List, Tuple
 
@@ -11,7 +12,7 @@ from twilio.rest import Client  # type: ignore
 logging.basicConfig(filename="models.log", encoding="utf-8", level=logging.DEBUG)
 
 
-from constants import NotificationType, SensorTypes, SensorConfig
+from constants import NotificationType, SensorTypes, SensorConfig, AlertTiming
 
 TWILIO_ACCOUNT_SID = config("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = config("TWILIO_AUTH_TOKEN")
@@ -27,6 +28,15 @@ all_readings_db = deta.Base("therm-all-readings")
 recent_readings_db = deta.Base("recent_readings")
 
 last_averages: list[tuple[str, float]] = []
+
+
+def _if_recent_reading() -> int | None:
+    resp = recent_readings_db.fetch()
+    for i in range(1, len(resp.items)):
+        if resp.items[i]["datetime"] >= time.time() - AlertTiming.AVERAGE_ALERT_WINDOW:
+            return True
+    else:
+        return False
 
 
 @dataclass(repr=True)
@@ -217,7 +227,6 @@ class Notifications:
         Returns:
             Tuple[Reading, NotificationType]: Returns the Reading object and the constant associated with the notification reason. Returns a NOOP if no notification is to be sent."
         """
-
         if (
             parsed_reading.recent_average
             >= parsed_reading.sensor_config.thresholds["average"]
@@ -237,21 +246,29 @@ class Notifications:
         elif (
             parsed_reading.sensor_reading - parsed_reading.recent_average
             >= parsed_reading.sensor_config.thresholds["single_increase_change"]
+            and _if_recent_reading()  # TODO make this specific to the sensor_type
         ):
 
             logging.debug(NotificationType.RAPID_INCREASE)
             return parsed_reading, NotificationType.RAPID_INCREASE
 
-        # Evaluates if the last average has increased too fast compared to the previous average
-        elif (
-            last_average[1] - parsed_reading.recent_average
-            >= parsed_reading.sensor_config.thresholds["average_increase_change"]
-            for last_average in last_averages
-            if last_average[0] == parsed_reading.sensor_name
-        ):
+        # # Evaluates if the last average has increased too fast compared to the previous average
+        # elif (
+        #     (
+        #         (
+        #             last_average[1] - parsed_reading.recent_average
+        #             >= parsed_reading.sensor_config.thresholds[
+        #                 "average_increase_change"
+        #             ]
+        #         )
+        #         and _get_recent_readings() <= 5
+        #     )
+        #     for last_average in last_averages
+        #     if last_average[0] == parsed_reading.sensor_name
+        # ):
 
-            logging.debug(NotificationType.RAPID_INCREASE)
-            return parsed_reading, NotificationType.RAPID_INCREASE
+        #     logging.debug(NotificationType.RAPID_INCREASE_AVERAGE)
+        #     return parsed_reading, NotificationType.RAPID_INCREASE_AVERAGE
 
         else:
             logging.debug("no notification triggered")

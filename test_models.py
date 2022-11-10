@@ -22,7 +22,7 @@ air_quality_config = c.SensorConfig(sensor_type=c.SensorTypes(3))
 
 
 @pytest.fixture
-def example_temperature_event():
+def example_temperature_event() -> model.SensorLogEvent:
     temp = 95
     readings4 = model.SensorLogReading(
         sensor_name="arduino_1", sensor_reading=temp, sensor_type=c.SensorTypes(1)
@@ -42,21 +42,24 @@ def example_temperature_event():
     return readings
 
 
-def test_event_parsing(example_temperature_event):
+def test_event_parsing_2(example_temperature_event):
     parsed_response = example_temperature_event.parse_event()
-    print(all(parsed_response))
     assert all(isinstance(i, model.ParsedReading) for i in parsed_response)
-    for i in range(0, len(parsed_response)):
-        assert parsed_response[i].datetime == example_temperature_event.datetime
-        assert parsed_response[i].event == example_temperature_event.event
-        assert parsed_response[i].best_lat == example_temperature_event.best_lat
-        assert parsed_response[i].best_long == example_temperature_event.best_long
-        assert (
-            parsed_response[i].sensor_name
-            == example_temperature_event.readings[i].sensor_name
-        )
-        assert parsed_response[i].sensor_config == model.SensorConfig(
-            example_temperature_event.readings[i].sensor_type
+    for i in range(len(parsed_response)):
+        assert parsed_response[i] == model.ParsedReading(
+            datetime=example_temperature_event.datetime,
+            event=example_temperature_event.event,
+            best_lat=example_temperature_event.best_lat,
+            best_long=example_temperature_event.best_long,
+            sensor_name=example_temperature_event.readings[i].sensor_name,
+            sensor_config=model.SensorConfig(
+                example_temperature_event.readings[i].sensor_type
+            ),
+            sensor_reading=example_temperature_event.readings[i].sensor_reading,
+            recent_average=example_temperature_event.compute_recent_sensor_averages(
+                example_temperature_event.readings[i].sensor_name,
+                example_temperature_event.readings[i].sensor_reading,
+            ),
         )
 
 
@@ -116,6 +119,7 @@ def test_average_temperature_too_high(example_temperature_reading):
     assert res[1] == c.NotificationType.TOO_HIGH_AVERAGE
 
 
+@pytest.mark.skip(reason="feature disabled")
 @pytest.mark.parametrize(
     "temp,average",
     [
@@ -151,6 +155,9 @@ def test_temperature_exception_handling(example_temperature_reading):
     [(90, 45)],
 )
 def test_database_error_handling(example_temperature_reading):
-    test_db = deta.Base("recent_readings")
+    test_db = deta.Base("test_db")
     db_res = example_temperature_reading.insert_parsed_reading_into_db(test_db)
     assert db_res == True
+    res = test_db.fetch()
+    for i in res.items:
+        test_db.delete(i["key"])

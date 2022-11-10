@@ -6,6 +6,10 @@ class CacheConfig(IntEnum):
     EXPIRATION_TIME = 360
 
 
+class AlertTiming(IntEnum):
+    AVERAGE_ALERT_WINDOW = 300
+
+
 class SensorTypes(IntEnum):
     TEMPERATURE = 1
     HUMIDITY = 2
@@ -49,6 +53,7 @@ class NotificationType(Enum):
     TOO_HIGH_AVERAGE = 5
     TOO_LOW_AVERAGE = 6
     NOOP = 7
+    RAPID_INCREASE_AVERAGE = 8
 
 
 # sensor_configs: List[

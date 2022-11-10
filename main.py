@@ -1,9 +1,10 @@
-from fastapi import Response, Form
-
-from twilio.twiml.messaging_response import MessagingResponse  # type: ignore
-from constants import CacheConfig
-import model as m
 import logging as logging
+
+from fastapi import Form, Response
+from twilio.twiml.messaging_response import MessagingResponse  # type: ignore
+
+import model as m
+from constants import CacheConfig
 
 is_armed: bool = True
 
@@ -19,13 +20,7 @@ def sensor_event(event: m.SensorLogEvent) -> m.SensorLogEvent:
     # inserts individual reading into a persistent database (all_readings_db) and a cache to support recent average calculation (recent_readings_db)
     for reading in parsed_readings:
         logging.debug(f"{reading} into db")
-        reading.insert_parsed_reading_into_db(
-            database=m.all_readings_db,
-        )
-        reading.insert_parsed_reading_into_db(
-            database=m.recent_readings_db,
-            expiration_seconds=CacheConfig.EXPIRATION_TIME.value,
-        )
+        insert_into_dbs(reading)
         notification_event.evaluate_for_notify(reading)
 
     # if any pending notifications are available, enqueues them to be sent
@@ -33,6 +28,16 @@ def sensor_event(event: m.SensorLogEvent) -> m.SensorLogEvent:
         if is_armed == True:
             notification_event.construct_twilio_sms()
     return event
+
+
+def insert_into_dbs(reading):
+    reading.insert_parsed_reading_into_db(
+        database=m.all_readings_db,
+    )
+    reading.insert_parsed_reading_into_db(
+        database=m.recent_readings_db,
+        expiration_seconds=CacheConfig.EXPIRATION_TIME.value,
+    )
 
 
 @m.app.post("/activate/")
