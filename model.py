@@ -30,7 +30,7 @@ recent_readings_db = deta.Base("recent_readings")
 last_averages: list[tuple[str, float]] = []
 
 
-def _if_recent_reading() -> int | None:
+def _if_recent_reading() -> int:
     resp = recent_readings_db.fetch()
     for i in range(1, len(resp.items)):
         if resp.items[i]["datetime"] >= time.time() - AlertTiming.AVERAGE_ALERT_WINDOW:
@@ -190,8 +190,12 @@ class Notifications:
         if len(self.queued_notifications) >= 1:
             body: str = ""
             for notification in self.queued_notifications:
-                message = f"{notification[0].sensor_name}, Reading: {notification[0].recent_average}, {notification[1]} \n"
-                body = body.__add__(message)
+                if notification[0].sensor_config.sensor_type == 1:
+                    message = f"Current temperature: {round(notification[0].recent_average,0)} F, Reason: {notification[1]} \n"
+                    body = body.__add__(message)
+                elif notification[0].sensor_config.sensor_type == 2:
+                    message = f"Current humidity: {round(notification[0].recent_average,2)} %, Reason: {notification[1]} \n"
+                    body = body.__add__(message)
             self.send_twilio_message(body)
         else:
             logging.debug("Not armed")

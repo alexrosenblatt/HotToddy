@@ -4,12 +4,14 @@ from fastapi import Form, Response
 from twilio.twiml.messaging_response import MessagingResponse  # type: ignore
 
 import model as m
+from model import app
 from constants import CacheConfig
 
 is_armed: bool = True
 
+
 # a POST route for webhook events to ingest readings, utilizes FastApi
-@m.app.post("/")
+@app.post("/")
 def sensor_event(event: m.SensorLogEvent) -> m.SensorLogEvent:
     logging.debug(f"event triggered at {event.datetime}")
     # instantiates empty "queue" for notifications
@@ -40,7 +42,7 @@ def insert_into_dbs(reading):
     )
 
 
-@m.app.post("/activate/")
+@app.post("/activate/")
 async def activate(Body: str = Form(...)):
     if (Body.lower()).rstrip() == "arm":
         response = MessagingResponse()

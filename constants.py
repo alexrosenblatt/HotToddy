@@ -31,10 +31,10 @@ class SensorConfig:
             }
         elif self.sensor_type == SensorTypes.HUMIDITY:
             self.thresholds = {
-                "average": 30,
-                "single_reading": 50,
-                "single_increase_change": 5,
-                "average_increase_change": 5,
+                "average": 80,
+                "single_reading": 90,
+                "single_increase_change": 20,
+                "average_increase_change": 20,
             }
         elif self.sensor_type == SensorTypes.AIRQUALITY:
             self.thresholds = {
@@ -54,12 +54,3 @@ class NotificationType(Enum):
     TOO_LOW_AVERAGE = 6
     NOOP = 7
     RAPID_INCREASE_AVERAGE = 8
-
-
-# sensor_configs: List[
-#     tuple[Union[Type[Temperature], Type[Humidity], Type[AirQuality]], SensorTypes]
-# ] = [
-#     (Temperature, SensorTypes.TEMPERATURE),
-#     (Humidity, SensorTypes.HUMIDITY),
-#     (AirQuality, SensorTypes.AIRQUALITY),
-# ]
