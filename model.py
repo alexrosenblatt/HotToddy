@@ -1,11 +1,12 @@
 import logging
 import time
+import datetime
 from dataclasses import dataclass
 from typing import List, Tuple
 
 from decouple import config  # type: ignore
 from deta import Deta  # type: ignore
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from pydantic import BaseModel
 from twilio.rest import Client  # type: ignore
 
@@ -29,6 +30,8 @@ recent_readings_db = deta.Base("recent_readings")
 
 last_averages: list[tuple[str, float]] = []
 
+is_armed: bool = True
+
 
 def _if_recent_reading() -> int:
     resp = recent_readings_db.fetch()
@@ -37,6 +40,51 @@ def _if_recent_reading() -> int:
             return True
     else:
         return False
+
+
+async def set_arm_state():
+    global is_armed
+    if is_armed == True:
+        is_armed = False
+    else:
+        is_armed = True
+    return is_armed
+
+
+async def get_and_send_last_temp_reading(response):
+    all_readings_temp = all_readings_db.fetch(query={"sensor_type": 1})
+    last_temp = max(all_readings_temp.items, key=lambda d: d["datetime"])
+    last_temp_reading = last_temp["sensor_reading"]
+    last_temp_datetime = datetime.datetime.fromtimestamp(last_temp["datetime"])
+    try:
+        response.message(
+            f"Last temperature = {last_temp_reading}F at {last_temp_datetime} utc"
+        )
+        return Response(
+            content=str(response),
+            media_type="application/xml",
+        )
+    except:
+        response.message(f"Last temp not available")
+        return Response(
+            content=str(response),
+            media_type="application/xml",
+        )
+
+
+async def set_arm_disarm_and_sms(response):
+    try:
+        response.message(f"Alarm state set to {await set_arm_state()}")
+        return Response(
+            content=str(response),
+            media_type="application/xml",
+        )
+    except:
+        response.message(f"Arming Failed")
+        return Response(
+            content=str(response),
+            media_type="application/xml",
+        )
 
 
 @dataclass(repr=True)

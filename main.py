@@ -7,8 +7,6 @@ import model as m
 from model import app
 from constants import CacheConfig
 
-is_armed: bool = True
-
 
 # a POST route for webhook events to ingest readings, utilizes FastApi
 @app.post("/")
@@ -27,7 +25,7 @@ def sensor_event(event: m.SensorLogEvent) -> m.SensorLogEvent:
 
     # if any pending notifications are available, enqueues them to be sent
     if len(notification_event.get_notifications()) >= 0:
-        if is_armed == True:
+        if m.is_armed == True:
             notification_event.construct_twilio_sms()
     return event
 
@@ -44,39 +42,16 @@ def insert_into_dbs(reading):
 
 @app.post("/activate/")
 async def activate(Body: str = Form(...)):
+    response = MessagingResponse()
     if (Body.lower()).rstrip() == "arm":
-        response = MessagingResponse()
-        try:
-            response.message(f"Current alarm armed state is {await set_arm_state()}")
-            return Response(
-                content=str(response),
-                media_type="application/xml",
-            )
-        except:
-            response.message(f"Arming Failed")
-            return Response(
-                content=str(response),
-                media_type="application/xml",
-            )
-
+        return await m.set_arm_disarm_and_sms(response)
+    elif (Body.lower()).rstrip() == "last temp":
+        return await m.get_and_send_last_temp_reading(response)
     else:
-        response = MessagingResponse()
-        response.message(f"Nothing happened")
+        response.message(
+            f"Nothing happened - 'Arm' to turn on alarm,'last' to get last reading."
+        )
         return Response(content=str(response), media_type="application/xml")
-
-
-async def set_arm_state():
-    global is_armed
-    if is_armed == True:
-        is_armed = False
-    else:
-        is_armed = True
-    print(is_armed)
-    return get_arm_state()
-
-
-def get_arm_state():
-    return is_armed
 
 
 # below is used for testing
